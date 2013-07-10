@@ -69,7 +69,7 @@ if args.port:
 if args.sleep:
 	sleep = args.sleep
 
-def image(u, ph, n, photo="", t=""):
+def smtp(u, ph, n, photo="", t=""):
 	"""
 	u: email username
 	ph: phone number to send to

@@ -17,4 +17,5 @@ See https://en.wikipedia.org/wiki/List_of_SMS_gateways for more examples.
 				-n/--ntimes
 				-s/--server
 				--port
+				--sleep
 

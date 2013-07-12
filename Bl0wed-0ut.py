@@ -143,7 +143,7 @@ def smtp(u, ph, n, photo="", t=""):
 
 if args.text and not args.photo:
 	txt = args.text
-	image(u, ph, n, t=txt)
+	smtp(u, ph, n, t=txt)
 
 elif not args.photo and not args.text:
 	parser.print_help()
@@ -151,9 +151,9 @@ elif not args.photo and not args.text:
 
 elif args.photo and not args.text:
 	photo = args.photo
-	image(u, ph, n, photo=photo)
+	smtp(u, ph, n, photo=photo)
 
 elif args.photo and args.text:
 	txt = args.text
 	photo = args.photo
-	image(u, ph, n, photo=photo, t=txt)
+	smtp(u, ph, n, photo=photo, t=txt)

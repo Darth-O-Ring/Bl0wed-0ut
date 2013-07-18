@@ -36,11 +36,11 @@ parser = argparse.ArgumentParser(description='SMTP and IMAGE function options.')
 parser.add_argument('-u', '--username', type=str, required=True, help='Gmail username(Required).', metavar='username')
 parser.add_argument('-ph', '--phone', type=str, required=True, help='Phone # to send to(Required).', metavar='phone_number')
 parser.add_argument('-txt', '--text', type=str, required=False, help='Text to send(Optional if -pic not given).', metavar='text_message')
-parser.add_argument('-n', '--ntimes', default=1, type=int, required=False, help='Number of times to send text(Optional).', metavar='n_times_to_send_text')
+parser.add_argument('-n', '--ntimes', default=1, type=int, required=False, help='Number of times to send text(Optional).', metavar='n_times_to_send_text/photo(Default=1)')
 parser.add_argument('-pic', '--photo', type=str, required=False, help='Pathname of photo to send(Optional).', metavar='photo to send')
-parser.add_argument('-s', '--server', default='smtp.gmail.com', type=str, required=False, help='SMTP Server(Optional).', metavar='SMTPServer')
-parser.add_argument('--port', default=587, type=int, required=False, help='SMTP Server port(Optional).', metavar='SMTP Port number')
-parser.add_argument('--sleep', default=10, type=int, required=False, help='Time to sleep between sends(Optional).', metavar='sleep time')
+parser.add_argument('-s', '--server', default='smtp.gmail.com', type=str, required=False, help='SMTP Server(Optional).', metavar='SMTPServer(Default=smtp.gmail.com)')
+parser.add_argument('--port', default=587, type=int, required=False, help='SMTP Server port(Optional).', metavar='SMTP Port number(Default=587)')
+parser.add_argument('--sleep', default=10, type=int, required=False, help='Time to sleep between sends(Optional).', metavar='sleep time(Default=10)')
 
 args = parser.parse_args()
 
@@ -61,7 +61,7 @@ if args.ntimes > 1:
 elif args.ntimes < 1:
 	print "\n-n must not be less than 1\n"
 	parser.print_help()
-	sys.exit(1)
+	sys.exit(2)
 if args.server:
 	s = args.server
 if args.port:
@@ -127,13 +127,13 @@ def smtp(u, ph, n, photo="", t=""):
 	except smtplib.SMTPConnectError:
 		print '\nError: Unable to establish connection with the server.\n'
 	except smtplib.SMTPServerDisconnected:
-		print '\nError: Server was disconnected.  Try login through web browser and look for captcha.\n'
+		print '\nError: Server was disconnected.\n'
 		sys.exit(1)
 	except smtplib.SMTPRecipientsRefused:
 		print "\nError: Recipient's refused.  May not be a valid gateway.  Check that -ph == phone#@gateway.\nSee https://en.wikipedia.org/wiki/List_of_SMS_gateways for examples.\n"
 		sys.exit(1)
 	except smtplib.SMTPDataError:
-		print '\nError:  Server refused to accept data.  This sometimes happens when sending over a certain amount of data.\n'
+		print '\nError:  Server refused to accept data.  This happens when sending over a certain amount of data.\nLook for captcha on login screen in browser.\n'
 		sys.exit(1)	
 	except smtplib.SMTPAuthenticationError:
 		print '\nError: Login failed.  Check username and password.\nIf a data error occurred before, try login using browser and look for captcha.\n'

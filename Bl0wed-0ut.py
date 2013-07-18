@@ -44,30 +44,38 @@ parser.add_argument('--sleep', default=10, type=int, required=False, help='Time 
 
 args = parser.parse_args()
 
-n = args.ntimes
-
 u = args.username
 
 ph = args.phone
 
 s = args.server
 
-port = args.port
 
-sleep = args.sleep
-
-if args.ntimes > 1:
+if args.ntimes >= 1:
 	n = args.ntimes
+
 elif args.ntimes < 1:
 	print "\n-n must not be less than 1\n"
 	parser.print_help()
 	sys.exit(2)
+
 if args.server:
 	s = args.server
-if args.port:
+
+if args.port < 0:
+	print '\nError:  port numbers cannot be negative.\n'
+	sys.exit(2)
+
+elif args.port >= 0:
 	port = args.port
-if args.sleep:
+
+if args.sleep < 0:
+	print '\nError:  why are you assigning a negative value to --sleep?\n'
+	sys.exit(2)
+
+elif args.sleep >= 0:
 	sleep = args.sleep
+
 
 def smtp(u, ph, n, photo="", t=""):
 	"""
@@ -121,11 +129,9 @@ def smtp(u, ph, n, photo="", t=""):
 			if counter == 0:
 				print '\nText bomb has finished.\n%s has just been blown out!\n' % ph
 				server.quit()
-	except (ValueError, TypeError):
-		print '\nCheck arguments passed: use -h or --help.\n'
-		sys.exit(1)
 	except smtplib.SMTPConnectError:
 		print '\nError: Unable to establish connection with the server.\n'
+		sys.exit(1)
 	except smtplib.SMTPServerDisconnected:
 		print '\nError: Server was disconnected.\n'
 		sys.exit(1)

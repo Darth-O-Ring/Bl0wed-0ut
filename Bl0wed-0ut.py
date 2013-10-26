@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python2
 
 __Author__ = "Darth_O-Ring"
 __Email__ = "darthoring@gmail.com"
@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+# Imports
 import smtplib
 import getpass
 import time
@@ -29,137 +30,208 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 import argparse
+import re
 
-version = 'v0.2.1'
+# Constants
+VERSION = 'v0.2.2'
 
-parser = argparse.ArgumentParser(description='SMTP and IMAGE function options.')
-parser.add_argument('-u', '--username', type=str, required=True, help='Gmail username(Required).', metavar='username')
-parser.add_argument('-ph', '--phone', type=str, required=True, help='Phone # to send to(Required).', metavar='phone_number')
-parser.add_argument('-txt', '--text', type=str, required=False, help='Text to send(Optional if -pic not given).', metavar='text_message')
-parser.add_argument('-n', '--ntimes', default=1, type=int, required=False, help='Number of times to send text(Optional).', metavar='n_times_to_send_text/photo(Default=1)')
-parser.add_argument('-pic', '--photo', type=str, required=False, help='Pathname of photo to send(Optional).', metavar='photo to send')
-parser.add_argument('-s', '--server', default='smtp.gmail.com', type=str, required=False, help='SMTP Server(Optional).', metavar='SMTPServer(Default=smtp.gmail.com)')
-parser.add_argument('--port', default=587, type=int, required=False, help='SMTP Server port(Optional).', metavar='SMTP Port number(Default=587)')
-parser.add_argument('--sleep', default=10, type=int, required=False, help='Time to sleep between sends(Optional).', metavar='sleep time(Default=10)')
-
-args = parser.parse_args()
-
-u = args.username
-
-ph = args.phone
-
-s = args.server
-
-
-if args.ntimes >= 1:
-	n = args.ntimes
-
-elif args.ntimes < 1:
-	print "\n-n must not be less than 1\n"
-	parser.print_help()
-	sys.exit(2)
-
-if args.server:
-	s = args.server
-
-if args.port < 0:
-	print '\nError:  port numbers cannot be negative.\n'
-	sys.exit(2)
-
-elif args.port >= 0:
-	port = args.port
-
-if args.sleep < 0:
-	print '\nError:  why are you assigning a negative value to --sleep?\n'
-	sys.exit(2)
-
-elif args.sleep >= 0:
-	sleep = args.sleep
-
-
-def smtp(u, ph, n, photo="", t=""):
+def bl0w_0ut(args):
 	"""
-	u: email username
-	ph: phone number to send to
-	n: number of times to send
-	photo: path to photo being sent
-	t: text to send with photo if provided
-	counter:  initialized to n
-	Sets up an smtp server connection using TLS, then sends text, photo, or photo with text n times.
+	Sets up an smtp server connection using TLS, 
+	then sends the passed in message n times.
 
+	Params:
+		@args - dictionary containing all the
+				parsed command line arguments
 	"""
 	try:
-		counter = n
-		if len(photo) > 0:
-			try:
-				filename = photo
-				img_data = open(filename, 'rb').read()
-				msg = MIMEMultipart()
-				if len(t) > 0:
-					text = MIMEText(t)
-					msg.attach(text)
-				image = MIMEImage(img_data, name=os.path.basename(filename))
-				msg.attach(image)
-				server = smtplib.SMTP(s, port)
-				server.starttls()
-				p = getpass.getpass('Enter Your Password: ')
-				server.login(u, p)
-				print '\nBl0wed-0ut %s Running by Darth_O-Ring...\n' % version
-				while counter > 0:
-					server.sendmail(u, ph, msg.as_string())
-					counter -= 1
-					time.sleep(sleep)
-				if counter == 0:
-					print '\nPhoto bomb has finished.\n%s has just been blown out!\n' % ph
-					server.quit()
-			except IOError:
-				print '\nCheck -pic/--photo option format.\n'
-				return args.photo
-				sys.exit(2)
-		elif len(photo) == 0:
-			server = smtplib.SMTP(s, port)
-			server.starttls()
-			p = getpass.getpass('Enter Your Password: ')
-			server.login(u, p)
-			print '\nBl0wed-0ut %s Running by Darth_O-Ring...\n' % version
-			while counter > 0:
-				server.sendmail(u, ph, txt)
-				counter -= 1
-				time.sleep(sleep)
-			if counter == 0:
-				print '\nText bomb has finished.\n%s has just been blown out!\n' % ph
-				server.quit()
+		# Connect to the SMTP server
+		server = smtplib.SMTP(args['s'], args['port'])
+		server.ehlo()
+		server.starttls()
+		# Authenticate to the server
+		server.login( args['u']
+		            , getpass.getpass('Enter Your Password: ')
+		            )
+
+		# Print a banner and break 0-rings
+		print('\nBl0wed-0ut %s by Darth_O-Ring running...' % VERSION)
+		for n in range(args['n']):
+			server.sendmail( args['u']
+			               , args['ph']
+			               , args['msg']
+			               )
+			time.sleep(args['sleep'])
+		
+		# Closing remarks	
+		print('\nText bomb has finished.\n\n'
+			  '%s has just been bl0wn 0ut!\n' % args['ph'])
+		server.quit()
+	
+	# Handle each error	
 	except smtplib.SMTPConnectError:
-		print '\nError: Unable to establish connection with the server.\n'
-		sys.exit(1)
+		sys.exit('\nError: Cannot connect to server.\n')
 	except smtplib.SMTPServerDisconnected:
-		print '\nError: Server was disconnected.\n'
-		sys.exit(1)
+		sys.exit('\nError: Server connection disconnected.\n')
 	except smtplib.SMTPRecipientsRefused:
-		print "\nError: Recipient's refused.  May not be a valid gateway.  Check that -ph == phone#@gateway.\nSee https://en.wikipedia.org/wiki/List_of_SMS_gateways for examples.\n"
-		sys.exit(1)
+		print("\nError: Recipient's refused.  May not be a valid "
+			  "gateway.  Check that -ph == phone#@gateway.\nSee "
+			  "https://en.wikipedia.org/wiki/List_of_SMS_gateways "
+			  "for examples.\n")
 	except smtplib.SMTPDataError:
-		print '\nError:  Server refused to accept data.  This happens when sending over a certain amount of data.\nLook for captcha on login screen in browser.\n'
-		sys.exit(1)	
+		sys.exit('\nError:  Server refused to accept data.  This '
+			     'happens when sending over a certain amount of data.'
+			     '\nLook for captcha on login screen in browser.\n')
 	except smtplib.SMTPAuthenticationError:
-		print '\nError: Login failed.  Check username and password.\nIf a data error occurred before, try login using browser and look for captcha.\n'
-		sys.exit(1)
+		sys.exit('\nError: Login failed.  Check username and password.\n'
+				'If a data error occurred before, try login using a '
+		        'browser and look for captcha.\n')
 
+def build_msg(text, photo):
+	'''build_msg(text, photo)
+	Return the message portion of the
+	text to bl0w someone 0ut with.
+	'''
+	# See if there's a photo
+	if photo:
+		try:
+			# Start a multi part MIME message
+			msg = MIMEMultipart()
+			
+			# Attach the photo to it
+			image = MIMEImage( open(photo, 'rb').read()
+							 , name=os.path.basename(photo)
+							 )
+			msg.attach(image)
+			
+			# Attach text if appropriate
+			if text:
+				msg.attach(MIMEText(text))	
+				
+			return msg		
+		except IOError:
+			sys.exit('\nCheck -pic/--photo option format.\n')
+	# Otherwise, plain SMS
+	else:
+		return text
 
+def parse_args(parser):
+	'''parse_args(parser)
+	Check for errors in user input;
+	if no errors occur, return a
+	dictionary with the arguments
+	required for bl0w_0ut.
+	
+	Args:
+		@parser - ArgumentParser object
+	'''
+	# Parse the arguments
+	args = parser.parse_args()
 
-if args.text and not args.photo:
-	txt = args.text
-	smtp(u, ph, n, t=txt)
+	# Check for errors
+	if args.ntimes < 1:
+		sys.exit("\nError:  n must not be less than 1\n")
 
-elif not args.photo and not args.text:
-	parser.print_help()
-	print "\nIf you don't want to use a photo, you must provide a text to send.\nEither a text or photo option must be given.\n"
+	if args.port < 0:
+		sys.exit('\nError:  port numbers cannot be negative.\n')
 
-elif args.photo and not args.text:
-	photo = args.photo
-	smtp(u, ph, n, photo=photo)
+	if args.sleep < 0:
+		sys.exit('\nError:  why are you assigning a negative value '
+			     'to --sleep?\n')
 
-elif args.photo and args.text:
-	txt = args.text
-	photo = args.photo
-	smtp(u, ph, n, photo=photo, t=txt)
+	if not args.photo and not args.text:
+		sys.exit("\nIf you don't want to use a photo, you must provide "
+				 "text to send.\nEither a text or photo option must be "
+			     "given.\n")
+
+	# Return a dictionary of 
+	# args to pass to bl0w_0ut
+	return { 's'     : args.server
+		   , 'port'  : args.port
+		   , 'u'     : args.username
+		   , 'ph'    : ' '.join(re.findall( r'\d{10}@\w+\.\w+'
+			                              , args.phone
+			                              )
+			                    )
+		   , 'n'     : args.ntimes
+		   , 'sleep' : args.sleep
+		   , 'msg'   : build_msg(args.text, args.photo)
+		   }
+
+def build_parser():
+	'''build_parser()
+	Create and return an ArgumentReader object
+	for parsing the Bl0wed-0ut command line args.
+	'''
+	parser = argparse.ArgumentParser(description='SMTP and IMAGE '
+												 'function options.')
+												 
+	# SMTP Server FQDN
+	parser.add_argument( '-s', '--server' 
+	                   , default='smtp.gmail.com' 
+			           , type=str, required=False 
+			           , help='SMTP Server(Optional).' 
+			           , metavar='SMTPServer(Default=smtp.gmail.com)'
+			           )
+	# SMTP Server Port
+	parser.add_argument( '--port'
+	                   , default=587 
+					   , type=int, required=False
+		               , help='SMTP Server port(Optional).'
+		               , metavar='SMTP Port number(Default=587)'
+		               )
+	# SMTP Server Username											 
+	parser.add_argument( '-u', '--username'
+	                   , type=str, required=True
+	                   , help='Gmail username(Required).'
+	                   , metavar='username'
+	                   )
+		
+	# Phone number
+	parser.add_argument( '-ph', '--phone'
+	                   , type=str, required=True 
+		               , help='Phone # as e-mail address(Required).'
+		               , metavar='phone_number'
+		               )
+	# Text to send
+	parser.add_argument( '-txt', '--text'
+	                   , type=str, required=False
+	                   , help='Text to send(Optional if -pic given).'
+	                   , metavar='text_message'
+	                   )
+	# Number of messages to send
+	parser.add_argument( '-n', '--ntimes'
+	                   , default=1
+	                   , type=int, required=False
+	                   , help='Number of times to send text(Optional).'
+	                   , metavar='n_times_to_send_text/photo(Default=1)'
+	                   )
+	# Picture to attach
+	parser.add_argument( '-pic', '--photo'
+	                   , type=str, required=False
+	                   , help='Pathname of photo to send(Optional).'
+	                   , metavar='photo to send'
+	                   )
+	# Delay between sends
+	parser.add_argument( '--sleep'
+	                   , default=10
+	                   , type=int, required=False
+	                   , help='Time to sleep between sends(Optional).'
+	                   , metavar='sleep time(Default=10)'
+	                   )
+
+	# Parser now built
+	return parser
+
+def main():
+	'''main()
+	Parse the command line args and call bl0w_0ut.
+	'''
+	# Deal with the command line arguments
+	args = parse_args(build_parser())
+	
+	# Start bl0wing 0ut 
+	bl0w_0ut(args)
+	
+if __name__ == '__main__':
+	main()
